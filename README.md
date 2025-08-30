@@ -12,7 +12,7 @@ Run this commands:
           ./client
 # You should connect to the server
 If you cant connect to the server run this in the terminal:
-    ping 192.168.1.45
+ 1.     ping 192.168.1.45
   # if you recive the packages then its good if not:
     On Linux:
         sudo apt install ufw
