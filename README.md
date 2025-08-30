@@ -4,12 +4,12 @@ App where you can messege other people
 # How to use
 1. install git and vs code
 2. run this command in the terminal:
-     git clone https://github.com/JohanLiebert363/Disto
-3. go to extencions in vs code and install a compiler for c++\c from microsoft
-4. enter where the code is using terminal
-5. run this commands:
-     g++ client.cpp -o client
-     ./client
+3.      git clone https://github.com/JohanLiebert363/Disto
+4. go to extencions in vs code and install a compiler for c++\c from microsoft
+5. enter where the code is using terminal
+Run this commands:
+5.       g++ client.cpp -o client
+          ./client
 # You should connect to the server
 If you cant connect to the server run this in the terminal:
     ping 192.168.1.45
