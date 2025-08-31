@@ -8,33 +8,30 @@
 
 int main() {
     int sock = 0;
-    struct sockaddr_in serv_addr;
+    struct sockaddr_in6 serv_addr;
     char buffer[1024] = {0};
 
-    // Create socket
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    
+    if ((sock = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
         std::cerr << "Socket creation error" << std::endl;
         return -1;
     }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    serv_addr.sin6_family = AF_INET6;
+    serv_addr.sin6_port = htons(PORT);
+    
+    if (inet_pton(AF_INET6, "2a06:63c4:e00:2d00:ea7e:abb3:71f2:b918", &serv_addr.sin6_addr) <= 0) {
         std::cerr << "Invalid address/ Address not supported" << std::endl;
         return -1;
     }
 
-    // Connect to the server
+
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         std::cerr << "Connection failed" << std::endl;
         return -1;
     }
 
     std::cout << "Connected to the server!" << std::endl;
-
-    // Chat with the server
     while (true) {
         std::string message;
         std::cout << "You: ";
