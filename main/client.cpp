@@ -1,51 +1,118 @@
-#include <iostream>
-#include <cstring>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
+#ifndef CLIENT_H
+#define CLIENT_H
+
+#include <QApplication>
+#include <QWidget>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QTextEdit>
+#include <QTcpSocket>
+#include <QString>
+#include <QHostAddress>
 
 #define PORT 8080
 
-int main() {
-    int sock = 0;
-    struct sockaddr_in6 serv_addr;
-    char buffer[1024] = {0};
+class ChatClient : public QWidget {
+    Q_OBJECT
 
-    
-    if ((sock = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
-        std::cerr << "Socket creation error" << std::endl;
-        return -1;
+public:
+    ChatClient(QWidget *parent = nullptr);
+
+private slots:
+    void connectToServer();
+    void sendMessage();
+    void readMessage();
+
+private:
+    QTcpSocket *socket;
+    QLineEdit *serverAddressInput;
+    QLineEdit *messageInput;
+    QTextEdit *chatDisplay;
+    QPushButton *connectButton;
+    QPushButton *sendButton;
+};
+
+#endif // CLIENT_H
+
+#include "client.h"
+#include <QVBoxLayout>
+#include <QHostAddress>
+
+ChatClient::ChatClient(QWidget *parent) : QWidget(parent), socket(new QTcpSocket(this)) {
+    QVBoxLayout *layout = new QVBoxLayout(this);
+
+    // Server address input
+    serverAddressInput = new QLineEdit(this);
+    serverAddressInput->setPlaceholderText("Enter server IPv6 address (e.g., 2a06:63c4:e00:2d00:ea7e:abb3:71f2:b918)");
+    layout->addWidget(serverAddressInput);
+
+    // Connect button
+    connectButton = new QPushButton("Connect to Server", this);
+    layout->addWidget(connectButton);
+
+    // Chat display
+    chatDisplay = new QTextEdit(this);
+    chatDisplay->setReadOnly(true);
+    layout->addWidget(chatDisplay);
+
+    // Message input
+    messageInput = new QLineEdit(this);
+    messageInput->setPlaceholderText("Enter your message...");
+    layout->addWidget(messageInput);
+
+    // Send button
+    sendButton = new QPushButton("Send", this);
+    sendButton->setEnabled(false); // Disabled until connected
+    layout->addWidget(sendButton);
+
+    // Connect signals and slots
+    connect(connectButton, &QPushButton::clicked, this, &ChatClient::connectToServer);
+    connect(sendButton, &QPushButton::clicked, this, &ChatClient::sendMessage);
+    connect(socket, &QTcpSocket::readyRead, this, &ChatClient::readMessage);
+}
+
+void ChatClient::connectToServer() {
+    QString serverAddress = serverAddressInput->text();
+    if (serverAddress.isEmpty()) {
+        chatDisplay->append("Please enter a server address.");
+        return;
     }
 
-    serv_addr.sin6_family = AF_INET6;
-    serv_addr.sin6_port = htons(PORT);
-    
-    if (inet_pton(AF_INET6, "2a06:63c4:e00:2d00:ea7e:abb3:71f2:b918", &serv_addr.sin6_addr) <= 0) {
-        std::cerr << "Invalid address/ Address not supported" << std::endl;
-        return -1;
+    socket->connectToHost(QHostAddress(serverAddress), PORT);
+
+    if (socket->waitForConnected(3000)) {
+        chatDisplay->append("Connected to the server!");
+        connectButton->setEnabled(false);
+        sendButton->setEnabled(true);
+    } else {
+        chatDisplay->append("Failed to connect to the server.");
+    }
+}
+
+void ChatClient::sendMessage() {
+    QString message = messageInput->text();
+    if (message.isEmpty()) {
+        return;
     }
 
+    socket->write(message.toUtf8());
+    chatDisplay->append("You: " + message);
+    messageInput->clear();
+}
 
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        std::cerr << "Connection failed" << std::endl;
-        return -1;
-    }
+void ChatClient::readMessage() {
+    QString message = QString::fromUtf8(socket->readAll());
+    chatDisplay->append("Server: " + message);
+}
 
-    std::cout << "Connected to the server!" << std::endl;
-    while (true) {
-        std::string message;
-        std::cout << "You: ";
-        std::getline(std::cin, message);
+int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
 
-        send(sock, message.c_str(), message.length(), 0);
+    ChatClient client;
+    client.setWindowTitle("Chat Client");
+    client.resize(400, 300);
+    client.show();
 
-        memset(buffer, 0, sizeof(buffer));
-        int valread = read(sock, buffer, 1024);
-        if (valread > 0) {
-            std::cout << "Server: " << buffer << std::endl;
-        }
-    }
-
-    close(sock);
-    return 0;
+    return app.exec();
 }
