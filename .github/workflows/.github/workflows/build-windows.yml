@@ -1,0 +1,49 @@
+name: Build Windows App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: "6.7.*"   # or 5.15.* if your project uses Qt5
+          host: windows
+          target: desktop
+          arch: win64_mingw   # or win64_msvc2019_64 if using MSVC
+
+      - name: Configure CMake
+        run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Deploy with windeployqt
+        run: |
+          windeployqt build\Release\Disto.exe
+          dir build\Release
+
+      - name: Package as Installer (MSI)
+        uses: csm123/msi-builder-action@v1
+        with:
+          name: "Disto"
+          version: ${{ github.ref_name }}
+          exe: "build\\Release\\Disto.exe"
+          icon: "assets\\app.ico"   # optional, add an icon file
+          output: "DistoInstaller.msi"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DistoInstaller
+          path: DistoInstaller.msi
