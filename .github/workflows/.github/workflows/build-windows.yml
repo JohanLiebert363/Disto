@@ -17,10 +17,10 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: "6.7.*"   # or 5.15.* if your project uses Qt5
+          version: "6.7.*"
           host: windows
           target: desktop
-          arch: win64_mingw   # or win64_msvc2019_64 if using MSVC
+          arch: win64_mingw
 
       - name: Configure CMake
         run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
@@ -39,7 +39,6 @@ jobs:
           name: "Disto"
           version: ${{ github.ref_name }}
           exe: "build\\Release\\Disto.exe"
-          icon: "assets\\app.ico"   # optional, add an icon file
           output: "DistoInstaller.msi"
 
       - name: Upload Artifact
@@ -47,10 +46,4 @@ jobs:
         with:
           name: DistoInstaller
           path: DistoInstaller.msi
-            - name: Upload Release Asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: DistoInstaller.msi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
